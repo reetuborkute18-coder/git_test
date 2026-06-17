@@ -80,6 +80,38 @@
     .details div{
         text-align:center;
     }
+
+    .city-list{
+    margin-top:15px;
+    text-align:left;
+    font-size:14px;
+    color:#333;
+}
+
+.city-list p{
+    font-weight:bold;
+    margin-bottom:5px;
+}
+
+#cityList{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+.city-chip{
+    background:#f1f1f1;
+    padding:5px 10px;
+    border-radius:20px;
+    cursor:pointer;
+    font-size:12px;
+    transition:0.2s;
+}
+
+.city-chip:hover{
+    background:#007bff;
+    color:white;
+}
 </style>
 </head>
 <body>
@@ -93,50 +125,133 @@
     <div class="weather" id="weatherBox">
         <h2 class="city">Search a city</h2>
     </div>
+    
+    <div class="city-list">
+        <p>Available Cities:</p>
+        <div id="cityList"></div>
+    </div>
+
+
 </div>
 
 <script>
-async function getWeather() {
-    const city = document.getElementById("cityInput").value;
-    
-    const apiKey = "YOUR_API_KEY"; // Put your API key here
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+const weatherData = {
+  // Gujarat
+  surat: { temp: 34, humidity: 68, wind: 14, condition: "Sunny", icon: "☀️" },
+  ahmedabad: { temp: 36, humidity: 55, wind: 16, condition: "Hot", icon: "🔥" },
+  vadodara: { temp: 35, humidity: 60, wind: 12, condition: "Sunny", icon: "☀️" },
+  rajkot: { temp: 33, humidity: 58, wind: 15, condition: "Clear", icon: "🌤️" },
 
-    try {
-        const response = await fetch(url);
-        const data = await response.json();
+  // Maharashtra
+  mumbai: { temp: 30, humidity: 82, wind: 18, condition: "Rainy", icon: "🌧️" },
+  pune: { temp: 29, humidity: 65, wind: 10, condition: "Cloudy", icon: "☁️" },
+  nagpur: { temp: 38, humidity: 50, wind: 12, condition: "Hot", icon: "🔥" },
 
-        if(data.cod == "404"){
-            document.getElementById("weatherBox").innerHTML = `
-                <h2>City not found</h2>
-            `;
-            return;
-        }
+  // Delhi & North India
+  delhi: { temp: 39, humidity: 45, wind: 10, condition: "Hot", icon: "🔥" },
+  noida: { temp: 38, humidity: 47, wind: 9, condition: "Sunny", icon: "☀️" },
+  gurgaon: { temp: 37, humidity: 48, wind: 11, condition: "Hot", icon: "🔥" },
 
-        document.getElementById("weatherBox").innerHTML = `
-            <h2 class="city">${data.name}</h2>
-            <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png">
-            <div class="temp">${Math.round(data.main.temp)}°C</div>
-            <p>${data.weather[0].description}</p>
+  // Rajasthan
+  jaipur: { temp: 40, humidity: 40, wind: 13, condition: "Very Hot", icon: "🔥" },
+  jodhpur: { temp: 41, humidity: 35, wind: 15, condition: "Desert Heat", icon: "🌞" },
+  udaipur: { temp: 35, humidity: 50, wind: 10, condition: "Pleasant", icon: "🌤️" },
 
-            <div class="details">
-                <div>
-                    <h3>${data.main.humidity}%</h3>
-                    <p>Humidity</p>
-                </div>
-                <div>
-                    <h3>${data.wind.speed} km/h</h3>
-                    <p>Wind Speed</p>
-                </div>
-            </div>
-        `;
+  // Uttar Pradesh
+  lucknow: { temp: 37, humidity: 60, wind: 8, condition: "Hot", icon: "🔥" },
+  kanpur: { temp: 38, humidity: 58, wind: 9, condition: "Sunny", icon: "☀️" },
+  varanasi: { temp: 36, humidity: 62, wind: 7, condition: "Warm", icon: "🌤️" },
 
-    } catch (error) {
-        document.getElementById("weatherBox").innerHTML = `
-            <h2>Error fetching data</h2>
-        `;
+  // South India
+  bengaluru: { temp: 27, humidity: 70, wind: 8, condition: "Cloudy", icon: "☁️" },
+  chennai: { temp: 32, humidity: 75, wind: 14, condition: "Humid", icon: "🌫️" },
+  hyderabad: { temp: 31, humidity: 65, wind: 10, condition: "Sunny", icon: "☀️" },
+  kochi: { temp: 29, humidity: 80, wind: 16, condition: "Rainy", icon: "🌧️" },
+
+  // East India
+  kolkata: { temp: 33, humidity: 85, wind: 12, condition: "Humid", icon: "🌫️" },
+  patna: { temp: 37, humidity: 70, wind: 9, condition: "Hot", icon: "🔥" },
+  bhubaneswar: { temp: 34, humidity: 78, wind: 11, condition: "Warm", icon: "🌤️" },
+
+  // North East
+  guwahati: { temp: 30, humidity: 80, wind: 10, condition: "Rainy", icon: "🌧️" },
+  shillong: { temp: 22, humidity: 85, wind: 8, condition: "Cool", icon: "🌧️" },
+
+  // Central India
+  bhopal: { temp: 35, humidity: 55, wind: 10, condition: "Sunny", icon: "☀️" },
+  indore: { temp: 34, humidity: 50, wind: 11, condition: "Clear", icon: "🌤️" }
+};
+
+function getWeather() {
+    const city = document
+        .getElementById("cityInput")
+        .value
+        .toLowerCase()
+        .trim();
+
+    const data = weatherData[city];
+
+    if (!data) {
+        document.getElementById("weatherBox").innerHTML =
+            "<h2>City not found</h2>";
+        return;
     }
+
+    document.getElementById("weatherBox").innerHTML = `
+        <div style="font-size:70px">${data.icon}</div>
+
+        <h2 class="city">
+            ${city.charAt(0).toUpperCase() + city.slice(1)}
+        </h2>
+
+        <div class="temp">${data.temp}°C</div>
+
+        <p>${data.condition}</p>
+
+        <div class="details">
+            <div>
+                <h3>${data.humidity}%</h3>
+                <p>Humidity</p>
+            </div>
+
+            <div>
+                <h3>${data.wind} km/h</h3>
+                <p>Wind Speed</p>
+            </div>
+        </div>
+    `;
 }
+
+document
+    .getElementById("cityInput")
+    .addEventListener("keypress", function(e){
+        if(e.key === "Enter"){
+            getWeather();
+        }
+    });
+
+    const cities = Object.keys(weatherData);
+
+function loadCityList() {
+    const container = document.getElementById("cityList");
+
+    container.innerHTML = "";
+
+    cities.forEach(city => {
+        const div = document.createElement("div");
+        div.className = "city-chip";
+        div.innerText = city;
+
+        div.onclick = () => {
+            document.getElementById("cityInput").value = city;
+            getWeather();
+        };
+
+        container.appendChild(div);
+    });
+}
+
+loadCityList();
 </script>
 
 </body>
